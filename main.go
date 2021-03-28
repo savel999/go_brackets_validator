@@ -7,39 +7,31 @@ https://www.sohamkamani.com/golang/2018-06-17-golang-using-context-cancellation/
 import (
 	"fmt"
 	"log"
-	"math/rand"
 	"net/http"
 	"os"
 	"time"
 )
 
-func someAction() {
-	randNum := rand.Int63n(1)
-	time.Sleep(time.Duration(randNum) * time.Millisecond)
-}
-
 func main() {
-	handler := http.NewServeMux()
-	handler.HandleFunc("/validate", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/validate", func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
+		//fmt.Println(r.Method)
 		// This prints to STDOUT to show that processing has started
 		fmt.Println(os.Stdout, "processing request\n")
 		// We use `select` to execute a peice of code depending on which
 		// channel receives a message first
 		select {
 		case <-time.After(2 * time.Second):
-			w.Write([]byte("request processed"))
+			//w.Write([]byte("request processed"))
 		case <-ctx.Done():
-			// If the request gets cancelled, log it
-			// to STDERR
-			fmt.Fprint(os.Stderr, "request cancelled\n")
+			fmt.Fprint(os.Stderr, "request cancelled: "+r.URL.Path)
+			return
 		}
-	}))
+
+		w.Write([]byte("request processed"))
+	})
+
 	fmt.Println("Server start")
-	log.Fatal(http.ListenAndServe(":8080", handler))
-
-}
-
-func controller() {
-
+	log.Fatal(http.ListenAndServe(":8080", mux))
 }
