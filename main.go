@@ -2,36 +2,27 @@ package main
 
 /**
 https://www.sohamkamani.com/golang/2018-06-17-golang-using-context-cancellation/ - context cancel
+https://medium.com/@pinkudebnath/graceful-shutdown-of-golang-servers-using-context-and-os-signals-cc1fa2c55e97 - graceful shutdown
+https://www.alexedwards.net/blog/making-and-using-middleware - middlewares
 */
 
 import (
 	"fmt"
+	"go_brackets_validator/controller"
+	"go_brackets_validator/middleware"
 	"log"
 	"net/http"
-	"os"
-	"time"
 )
 
 func main() {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/validate", func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		//fmt.Println(r.Method)
-		// This prints to STDOUT to show that processing has started
-		fmt.Println(os.Stdout, "processing request\n")
-		// We use `select` to execute a peice of code depending on which
-		// channel receives a message first
-		select {
-		case <-time.After(2 * time.Second):
-			//w.Write([]byte("request processed"))
-		case <-ctx.Done():
-			fmt.Fprint(os.Stderr, "request cancelled: "+r.URL.Path)
-			return
-		}
+	c := &controller.BracketsController{}
+	mux.Handle("/validate", middleware.IsNotPostMethodMiddleware(http.HandlerFunc(c.ValidateAction)))
+	mux.Handle("/fix", middleware.IsNotPostMethodMiddleware(http.HandlerFunc(c.FixAction)))
 
-		w.Write([]byte("request processed"))
-	})
+	handler := middleware.LoggerMiddleware(mux)
+	handler = middleware.HeadersMiddleware(handler)
 
 	fmt.Println("Server start")
-	log.Fatal(http.ListenAndServe(":8080", mux))
+	log.Fatal(http.ListenAndServe(":8080", handler))
 }
