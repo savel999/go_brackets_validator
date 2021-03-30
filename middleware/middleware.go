@@ -4,7 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"go_brackets_validator/utils"
+	"log"
 	"net/http"
+	"runtime/debug"
 	"time"
 )
 
@@ -32,5 +34,18 @@ func IsNotPostMethodMiddleware(next http.Handler) http.Handler {
 		}
 
 		next.ServeHTTP(w, r)
+	})
+}
+
+func PanicRecoveryMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		defer func() {
+			if err := recover(); err != nil {
+				response := utils.NewApiResponse(w)
+				response.ErrorJsonResponse([]error{errors.New(http.StatusText(http.StatusInternalServerError))}, http.StatusInternalServerError)
+				log.Println(string(debug.Stack()))
+			}
+		}()
+		next.ServeHTTP(w, req)
 	})
 }

@@ -17,10 +17,12 @@ import (
 func main() {
 	mux := http.NewServeMux()
 	c := &controller.BracketsController{}
+
 	mux.Handle("/validate", middleware.IsNotPostMethodMiddleware(http.HandlerFunc(c.ValidateAction)))
 	mux.Handle("/fix", middleware.IsNotPostMethodMiddleware(http.HandlerFunc(c.FixAction)))
 
 	handler := middleware.LoggerMiddleware(mux)
+	handler = middleware.PanicRecoveryMiddleware(handler)
 	handler = middleware.HeadersMiddleware(handler)
 
 	fmt.Println("Server start")

@@ -1,13 +1,19 @@
 package controller
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"go_brackets_validator/utils"
 	"io/ioutil"
 	"net/http"
-	"os"
+	"strconv"
 	"time"
+)
+
+const (
+	jsonItemsLimit = 20 // ограничение на длину входящего json'a
 )
 
 type BracketsController struct {
@@ -15,39 +21,90 @@ type BracketsController struct {
 
 func (controller *BracketsController) ValidateAction(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	//
+	completeChan := make(chan bool, 1)
+
+	go func(ctx context.Context) {
+		defer close(completeChan)
+		response := utils.NewApiResponse(w)
+		var reqItems []string
+		jsonData, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			panic(err)
+		}
+		err = json.Unmarshal(jsonData, &reqItems)
+
+		if err != nil {
+			response.ErrorJsonResponse([]error{errors.New("bad JSON")}, http.StatusBadRequest)
+		} else if len(reqItems) > jsonItemsLimit {
+			response.ErrorJsonResponse([]error{errors.New("items count must be less or equal " + strconv.Itoa(jsonItemsLimit))}, http.StatusBadRequest)
+		} else {
+			responseItems := make(map[string]bool)
+			for _, item := range reqItems {
+				select {
+				case <-ctx.Done():
+					return
+				default:
+					responseItems[item] = utils.ValidateBrackets(item)
+					time.Sleep(500 * time.Millisecond)
+				}
+			}
+			response.SuccessJsonResponse(responseItems)
+		}
+
+		completeChan <- true
+	}(ctx)
+
 	select {
-	case <-time.After(1 * time.Second):
-		//w.Write([]byte("request processed"))
 	case <-ctx.Done():
-		fmt.Fprint(os.Stderr, "request cancelled: "+r.URL.Path)
+		fmt.Println("request cancelled: " + r.URL.Path)
+		return
+	case <-completeChan:
+		fmt.Println("completed: " + r.URL.Path)
 		return
 	}
-
-	var reqItems []string
-	jsonData, err := ioutil.ReadAll(r.Body)
-	err = json.Unmarshal(jsonData, &reqItems)
-
-	if err != nil {
-		// Handle error
-	}
-	fmt.Println(reqItems)
-
-	response := utils.NewApiResponse(w)
-	response.SuccessJsonResponse(map[string]bool{"234234": false, "345345345": true})
-
 }
 
 func (controller *BracketsController) FixAction(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	//
+	completeChan := make(chan bool, 1)
+
+	go func(ctx context.Context) {
+		defer close(completeChan)
+		response := utils.NewApiResponse(w)
+		var reqItems []string
+		jsonData, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			panic(err)
+		}
+		err = json.Unmarshal(jsonData, &reqItems)
+
+		if err != nil {
+			response.ErrorJsonResponse([]error{errors.New("bad JSON")}, http.StatusBadRequest)
+		} else if len(reqItems) > jsonItemsLimit {
+			response.ErrorJsonResponse([]error{errors.New("items count must be less or equal " + strconv.Itoa(jsonItemsLimit))}, http.StatusBadRequest)
+		} else {
+			responseItems := make(map[string]string)
+			for _, item := range reqItems {
+				select {
+				case <-ctx.Done():
+					return
+				default:
+					responseItems[item] = utils.FixBrackets(item)
+					time.Sleep(500 * time.Millisecond)
+				}
+			}
+			response.SuccessJsonResponse(responseItems)
+		}
+
+		completeChan <- true
+	}(ctx)
+
 	select {
-	case <-time.After(2 * time.Second):
-		//w.Write([]byte("request processed"))
 	case <-ctx.Done():
-		fmt.Fprint(os.Stderr, "request cancelled: "+r.URL.Path)
+		fmt.Println("request cancelled: " + r.URL.Path)
+		return
+	case <-completeChan:
+		fmt.Println("completed: " + r.URL.Path)
 		return
 	}
-
-	w.Write([]byte("request processed"))
 }
