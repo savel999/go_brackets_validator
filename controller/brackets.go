@@ -44,8 +44,10 @@ func (controller *BracketsController) ValidateAction(w http.ResponseWriter, r *h
 				case <-ctx.Done():
 					return
 				default:
-					responseItems[item] = utils.ValidateBrackets(item)
-					time.Sleep(500 * time.Millisecond)
+					if _, isExist := responseItems[item]; !isExist {
+						responseItems[item] = utils.ValidateBrackets(item)
+						time.Sleep(1 * time.Second)
+					}
 				}
 			}
 			response.SuccessJsonResponse(responseItems)
@@ -89,8 +91,9 @@ func (controller *BracketsController) FixAction(w http.ResponseWriter, r *http.R
 				case <-ctx.Done():
 					return
 				default:
-					responseItems[item] = utils.FixBrackets(item)
-					time.Sleep(500 * time.Millisecond)
+					if _, isExist := responseItems[item]; !isExist {
+						responseItems[item] = utils.FixBrackets(item)
+					}
 				}
 			}
 			response.SuccessJsonResponse(responseItems)
