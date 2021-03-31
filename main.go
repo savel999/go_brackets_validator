@@ -17,8 +17,6 @@ import (
 	"time"
 )
 
-//const name =
-
 func serve(ctx context.Context) error {
 	mux := http.NewServeMux()
 	c := &controller.BracketsController{}

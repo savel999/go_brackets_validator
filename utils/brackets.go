@@ -8,8 +8,22 @@ var (
 	}
 )
 
+func getAllBrackets() []string {
+	var allBracketsTypes []string
+	for k, v := range bracketsMap {
+		allBracketsTypes = append(allBracketsTypes, v, k)
+	}
+
+	return allBracketsTypes
+}
+
 func ValidateBrackets(str string) bool {
-	var needCloseBrackets []string
+	var (
+		needCloseBrackets []string
+		allBracketsTypes  []string
+	)
+
+	allBracketsTypes = getAllBrackets()
 
 	for i := 0; i < len(str); i++ {
 		letter := string(str[i])
@@ -19,7 +33,7 @@ func ValidateBrackets(str string) bool {
 			needCloseBrackets = append(needCloseBrackets, closeBracket)
 		} else if len(needCloseBrackets) > 0 && needCloseBrackets[len(needCloseBrackets)-1] == letter {
 			needCloseBrackets = needCloseBrackets[:len(needCloseBrackets)-1]
-		} else {
+		} else if InArray(letter, allBracketsTypes) >= 0 {
 			return false
 		}
 
@@ -30,13 +44,20 @@ func ValidateBrackets(str string) bool {
 
 func FixBrackets(str string) string {
 	result := ""
-	var needCloseBrackets []string
+	var (
+		needCloseBrackets []string
+		allBracketsTypes  []string
+	)
+
+	allBracketsTypes = getAllBrackets()
 
 	for i := 0; i < len(str); i++ {
 		letter := string(str[i])
 		closeBracket, isOpenBracket := bracketsMap[letter]
 
-		if isOpenBracket {
+		if InArray(letter, allBracketsTypes) < 0 {
+			result = result + letter
+		} else if isOpenBracket {
 			needCloseBrackets = append(needCloseBrackets, closeBracket)
 			result = result + letter
 		} else if len(needCloseBrackets) > 0 {

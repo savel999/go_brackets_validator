@@ -19,7 +19,7 @@ const (
 type BracketsController struct {
 }
 
-func (controller *BracketsController) ValidateAction(w http.ResponseWriter, r *http.Request) {
+func (controller BracketsController) ValidateAction(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	completeChan := make(chan bool, 1)
 
@@ -66,7 +66,7 @@ func (controller *BracketsController) ValidateAction(w http.ResponseWriter, r *h
 	}
 }
 
-func (controller *BracketsController) FixAction(w http.ResponseWriter, r *http.Request) {
+func (controller BracketsController) FixAction(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	completeChan := make(chan bool, 1)
 
