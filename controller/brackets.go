@@ -9,7 +9,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
-	"time"
 )
 
 const (
@@ -46,7 +45,6 @@ func (controller BracketsController) ValidateAction(w http.ResponseWriter, r *ht
 				default:
 					if _, isExist := responseItems[item]; !isExist {
 						responseItems[item] = utils.ValidateBrackets(item)
-						time.Sleep(1 * time.Second)
 					}
 				}
 			}
