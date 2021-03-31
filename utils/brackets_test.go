@@ -38,9 +38,9 @@ func TestFixBrackets(t *testing.T) {
 	}
 
 	for key, value := range testMap {
-		isCorrect := FixBrackets(key)
-		if isCorrect != value {
-			t.Errorf("TestFixBrackets(\"%v\") = %v, expected %v", key, isCorrect, value)
+		result := FixBrackets(key)
+		if result != value {
+			t.Errorf("TestFixBrackets(\"%v\") = %v, expected %v", key, result, value)
 		}
 	}
 }
